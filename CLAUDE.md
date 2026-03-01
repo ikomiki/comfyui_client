@@ -18,6 +18,9 @@ python comfy_client.py -p "プロンプト" -W 1152 -H 896 -b 1
 # リモートサーバー指定
 COMFYUI_SERVER=http://192.168.1.10:8188 python comfy_client.py -p "prompt" -W 1152 -H 896 -b 1
 
+# キャラクタープロンプトを環境変数で固定
+COMFYUI_CHARACTER="1girl, solo" python comfy_client.py -p "prompt" -W 1152 -H 896 -b 1
+
 # stdin からプロンプト読み込み
 python comfy_client.py -W 1152 -H 896 -b 1 < prompt.txt
 ```
@@ -64,6 +67,7 @@ python comfy_client.py -W 1152 -H 896 -b 1 < prompt.txt
 
 ### 環境変数
 
-| 変数               | デフォルト              | 説明                        |
-|--------------------|-------------------------|-----------------------------|
-| `COMFYUI_SERVER`   | `http://127.0.0.1:8188` | ComfyUI サーバーの URL      |
+| 変数                  | デフォルト              | 説明                                        |
+|-----------------------|-------------------------|---------------------------------------------|
+| `COMFYUI_SERVER`      | `http://127.0.0.1:8188` | ComfyUI サーバーの URL                      |
+| `COMFYUI_CHARACTER`   | なし                    | キャラクタープロンプトのデフォルト値（`-c` オプションの省略時に使用） |
