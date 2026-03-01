@@ -14,6 +14,7 @@ import requests
 import websockets
 
 DEFAULT_SERVER = os.environ.get("COMFYUI_SERVER", "http://127.0.0.1:8188")
+DEFAULT_CHARACTER = os.environ.get("COMFYUI_CHARACTER")
 DEFAULT_TEMPLATE = "t2iv2.json"
 DEFAULT_OUTPUT_DIR = "./outputs"
 
@@ -247,7 +248,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-W", "--width", type=int, default=1024, help="Image width (default: 1024)")
     parser.add_argument("-H", "--height", type=int, default=1024, help="Image height (default: 1024)")
     parser.add_argument("-b", "--batch", type=int, default=1, help="Batch size (default: 1)")
-    parser.add_argument("-c", "--character", default=None, help="Character prompt (optional)")
+    parser.add_argument("-c", "--character", default=DEFAULT_CHARACTER, help="Character prompt (env: COMFYUI_CHARACTER)")
     parser.add_argument("-s", "--seed", type=int, default=None, help="Seed (random if omitted)")
     parser.add_argument("-o", "--output-dir", default=DEFAULT_OUTPUT_DIR, help="Output directory")
     parser.add_argument(
