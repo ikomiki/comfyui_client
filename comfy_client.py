@@ -295,6 +295,8 @@ def main() -> None:
     apply_workflow_args(workflow, args, seed)
 
     server = args.server.rstrip("/")
+    if not server.startswith(("http://", "https://")):
+        server = "http://" + server
     output_dir = Path(args.output_dir)
     client_id = str(uuid.uuid4())
     ws_url = f"{_server_to_ws(server)}/ws?clientId={client_id}"
