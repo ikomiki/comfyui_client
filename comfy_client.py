@@ -69,6 +69,7 @@ async def listen_and_download(
     workflow: dict,
     client_id: str,
     output_dir: Path,
+    include_temp: bool = False,
 ) -> list[Path]:
     """Submit the workflow, monitor via WebSocket, download images."""
 
@@ -166,6 +167,10 @@ async def listen_and_download(
         subfolder = img_info.get("subfolder", "")
         img_type = img_info.get("type", "output")
 
+        if not include_temp and filename.startswith("ComfyUI_temp_"):
+            print(f"  Skipped (temp): {filename}")
+            continue
+
         params = {"filename": filename, "subfolder": subfolder, "type": img_type}
         try:
             dl = requests.get(f"{server}/view", params=params, timeout=60)
@@ -251,6 +256,10 @@ def parse_args() -> argparse.Namespace:
         help="ComfyUI server URL (env: COMFYUI_SERVER)",
     )
     parser.add_argument("-t", "--template", default=DEFAULT_TEMPLATE, help="Workflow template path")
+    parser.add_argument(
+        "--include-temp", action="store_true",
+        help="Also save ComfyUI_temp_* files (skipped by default)",
+    )
     return parser.parse_args()
 
 
@@ -300,7 +309,7 @@ def main() -> None:
 
     try:
         asyncio.run(
-            listen_and_download(ws_url, server, workflow, client_id, output_dir)
+            listen_and_download(ws_url, server, workflow, client_id, output_dir, args.include_temp)
         )
     except RuntimeError as exc:
         print(f"\n[ERROR] {exc}")
