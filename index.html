@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComfyUI Web Client</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: #16213e;
+    padding: 12px 20px;
+    border-bottom: 1px solid #0f3460;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Left panel */
+  .panel-left {
+    width: 340px;
+    min-width: 260px;
+    background: #16213e;
+    border-right: 1px solid #0f3460;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    color: #a0aec0;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  textarea, input[type="number"] {
+    width: 100%;
+    background: #0f1d36;
+    border: 1px solid #2d4a7a;
+    border-radius: 6px;
+    color: #e0e0e0;
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus, input[type="number"]:focus {
+    border-color: #4a9eff;
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .row > div { flex: 1; }
+
+  input[type="number"] {
+    resize: none;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  button#generate-btn {
+    flex: 1;
+    padding: 10px;
+    background: #4a9eff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  button#generate-btn:hover:not(:disabled) { background: #2d83e8; }
+  button#generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .infinity-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .infinity-toggle input[type="checkbox"] { display: none; }
+
+  .infinity-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    opacity: 0.35;
+    transition: opacity 0.2s, color 0.2s;
+    color: #e0e0e0;
+  }
+
+  .infinity-toggle input:checked ~ .infinity-icon {
+    opacity: 1;
+    color: #f6ad55;
+  }
+
+  /* Right panel */
+  .panel-right {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .image-grid img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+    border: 1px solid #2d4a7a;
+    object-fit: contain;
+  }
+
+  .progress-section {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-bar-wrap {
+    background: #0f1d36;
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: #4a9eff;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.2s;
+  }
+
+  .progress-text {
+    font-size: 0.82rem;
+    color: #a0aec0;
+  }
+
+  .status-text {
+    font-size: 0.82rem;
+    color: #68d391;
+    min-height: 1.2em;
+  }
+
+  .placeholder {
+    color: #4a5568;
+    font-size: 0.9rem;
+    text-align: center;
+    margin: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>ComfyUI Web Client</header>
+
+<div class="layout">
+
+  <!-- Left: form -->
+  <div class="panel-left">
+    <div>
+      <label for="positive-prompt">Positive Prompt</label>
+      <textarea id="positive-prompt" rows="5" placeholder="beautiful landscape, detailed, high quality..."></textarea>
+    </div>
+    <div>
+      <label for="character-prompt">Character Prompt</label>
+      <textarea id="character-prompt" rows="4" placeholder="optional character description..."></textarea>
+    </div>
+    <div class="row">
+      <div>
+        <label for="width">Width</label>
+        <input type="number" id="width" value="1024" min="64" step="64">
+      </div>
+      <div>
+        <label for="height">Height</label>
+        <input type="number" id="height" value="1024" min="64" step="64">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="batch">Batch</label>
+        <input type="number" id="batch" value="1" min="1" max="16">
+      </div>
+      <div>
+        <label for="seed">Seed (blank=random)</label>
+        <input type="number" id="seed" placeholder="random" min="0">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button id="generate-btn">Generate</button>
+      <label class="infinity-toggle" title="Infinity: 生成完了後に自動で再生成">
+        <input type="checkbox" id="infinity-mode">
+        <span class="infinity-icon">∞</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Right: images + progress -->
+  <div class="panel-right">
+    <div class="progress-section" id="progress-section" style="display:none">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-text" id="progress-text">Starting...</div>
+      <div class="status-text" id="status-text"></div>
+    </div>
+
+    <div class="image-grid" id="image-grid">
+      <div class="placeholder" id="placeholder">Generated images will appear here</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const FIELDS = ['positive-prompt', 'character-prompt', 'width', 'height', 'batch', 'seed'];
+
+// Restore from localStorage
+FIELDS.forEach(id => {
+  const el = document.getElementById(id);
+  const saved = localStorage.getItem('comfyui:' + id);
+  if (saved !== null) el.value = saved;
+});
+
+// Save on change
+FIELDS.forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    localStorage.setItem('comfyui:' + id, el.value);
+  });
+});
+
+// Infinity toggle: restore & save
+const infinityCheck = document.getElementById('infinity-mode');
+infinityCheck.checked = localStorage.getItem('comfyui:infinity') === 'true';
+infinityCheck.addEventListener('change', () => {
+  localStorage.setItem('comfyui:infinity', infinityCheck.checked);
+});
+
+// DOM refs
+const btn = document.getElementById('generate-btn');
+const progressSection = document.getElementById('progress-section');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
+const statusText = document.getElementById('status-text');
+const imageGrid = document.getElementById('image-grid');
+const placeholder = document.getElementById('placeholder');
+
+// サイクル開始時点の infinity 状態（生成中に変更されても画像配置は変わらない）
+let cycleStartedAsInfinity = false;
+
+// Read current form values
+function getFormBody() {
+  return {
+    prompt: document.getElementById('positive-prompt').value,
+    character: document.getElementById('character-prompt').value || null,
+    width: parseInt(document.getElementById('width').value) || 1024,
+    height: parseInt(document.getElementById('height').value) || 1024,
+    batch: parseInt(document.getElementById('batch').value) || 1,
+    seed: document.getElementById('seed').value || null,
+  };
+}
+
+async function startGenerate() {
+  const body = getFormBody();
+  cycleStartedAsInfinity = infinityCheck.checked;
+
+  // Reset UI
+  btn.disabled = true;
+  // infinityモードOFFのときだけ画像をクリア
+  if (!cycleStartedAsInfinity) {
+    imageGrid.innerHTML = '';
+  }
+  // プレースホルダーは常に非表示
+  if (placeholder) placeholder.style.display = 'none';
+  progressSection.style.display = '';
+  progressFill.style.width = '0%';
+  progressText.textContent = 'Submitting...';
+  statusText.textContent = '';
+
+  try {
+    const response = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      statusText.textContent = `Error: HTTP ${response.status}`;
+      btn.disabled = false;
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        if (!part.trim()) continue;
+        let event = 'message';
+        let data = '';
+        for (const line of part.split('\n')) {
+          if (line.startsWith('event: ')) event = line.slice(7).trim();
+          else if (line.startsWith('data: ')) data = line.slice(6).trim();
+        }
+        handleEvent(event, data);
+      }
+    }
+  } catch (err) {
+    statusText.textContent = `Error: ${err.message}`;
+    btn.disabled = false;
+  }
+}
+
+btn.addEventListener('click', () => startGenerate());
+
+function handleEvent(event, data) {
+  let d;
+  try { d = JSON.parse(data); } catch { return; }
+
+  if (event === 'progress') {
+    const pct = d.max ? Math.round((d.value / d.max) * 100) : 0;
+    progressFill.style.width = pct + '%';
+    progressText.textContent = `Step ${d.value} / ${d.max}  (${pct}%)`;
+
+  } else if (event === 'executing') {
+    statusText.textContent = `Executing: ${d.node}`;
+
+  } else if (event === 'image') {
+    const params = new URLSearchParams({
+      filename: d.filename,
+      subfolder: d.subfolder || '',
+      type: d.type || 'output',
+    });
+    const img = document.createElement('img');
+    img.src = `/view?${params}`;
+    img.alt = d.filename;
+    if (cycleStartedAsInfinity) {
+      imageGrid.prepend(img);
+    } else {
+      imageGrid.appendChild(img);
+    }
+
+  } else if (event === 'done') {
+    progressFill.style.width = '100%';
+    progressText.textContent = 'Done!';
+    statusText.textContent = '';
+    if (infinityCheck.checked) {
+      // フォームの現在値で即座に再生成
+      startGenerate();
+    } else {
+      btn.disabled = false;
+    }
+
+  } else if (event === 'error') {
+    statusText.textContent = `Error: ${d.message}`;
+    btn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>

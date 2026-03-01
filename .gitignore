@@ -1,3 +1,6 @@
 .claude/settings.local.json
 outputs
 venv
+.DS_Store
+__pycache__
+.env
